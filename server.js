@@ -1,15 +1,17 @@
 import { WebSocketServer, WebSocket } from 'ws';
 
-const wss = new WebSocketServer({ port: 8080 });
+// Utiliser le port attribué par Render ou 8080 par défaut en local
+const PORT = process.env.PORT || 8080;
+const wss = new WebSocketServer({ port: PORT });
 
-const clients = new Map<string, WebSocket>();
+const clients = new Map();
 
-console.log('Serveur de relais WebSocket démarré sur le port 8080');
+console.log(`Serveur de relais WebSocket démarré sur le port ${PORT}`);
 
-wss.on('connection', (ws: WebSocket) => {
-  let currentUserId: string | null = null;
+wss.on('connection', (ws) => {
+  let currentUserId = null;
 
-  ws.on('message', (data: string) => {
+  ws.on('message', (data) => {
     try {
       const message = JSON.parse(data);
 
@@ -33,7 +35,7 @@ wss.on('connection', (ws: WebSocket) => {
             type: 'message',
             senderId: currentUserId,
             encryptedPayload: encryptedPayload,
-            senderPublicKey: senderPublicKey // <-- Ajout indispensable ici !
+            senderPublicKey: senderPublicKey
           }));
           console.log(`[Message relayé] De ${currentUserId} vers ${recipientId}`);
         } else {
