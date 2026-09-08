@@ -4,8 +4,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 const PORT = process.env.PORT || 8080;
 const wss = new WebSocketServer({ port: PORT });
 
+// Maps pour stocker les clients connectés et les messages en attente
 const clients = new Map();
-// Nouvelle Map pour stocker les messages en attente : userId -> Tableau de messages
 const offlineMessages = new Map();
 
 console.log(`Serveur de relais WebSocket démarré sur le port ${PORT}`);
@@ -17,14 +17,14 @@ wss.on('connection', (ws) => {
     try {
       const message = JSON.parse(data);
 
-      // 1. Événement d'enregistrement de l'utilisateur avec son ID aléatoire
+      // 1. Événement d'enregistrement de l'utilisateur avec son ID
       if (message.type === 'register') {
         currentUserId = message.userId;
         if (currentUserId) {
           clients.set(currentUserId, ws);
           console.log(`[Connecté] Utilisateur enregistré : ${currentUserId}`);
 
-          // Dès que l'utilisateur s'enregistre, on lui envoie ses messages en attente s'il y en a !
+          // Dès que l'utilisateur se connecte, on lui envoie ses messages en attente
           if (offlineMessages.has(currentUserId)) {
             const pending = offlineMessages.get(currentUserId);
             console.log(`[File d'attente] Envoi de ${pending.length} message(s) en attente à ${currentUserId}`);
@@ -33,7 +33,7 @@ wss.on('connection', (ws) => {
               ws.send(JSON.stringify(msg));
             });
 
-            // On vide la file d'attente une fois envoyés
+            // On vide la file d'attente une fois les messages transmis
             offlineMessages.delete(currentUserId);
           }
         }
@@ -52,25 +52,37 @@ wss.on('connection', (ws) => {
         };
 
         if (recipientWs && recipientWs.readyState === WebSocket.OPEN) {
-          // Destinataire en ligne : Transférer immédiatement
+          // Destinataire en ligne : Envoi immédiat
           recipientWs.send(JSON.stringify(messagePayload));
           console.log(`[Message relayé] De ${currentUserId} vers ${recipientId}`);
         } else {
-          // Destinataire HORS LIGNE : Stocker dans sa file d'attente personnelle
+          // Destinataire hors ligne : Stockage temporaire dans sa file d'attente
           if (!offlineMessages.has(recipientId)) {
             offlineMessages.set(recipientId, []);
           }
           offlineMessages.get(recipientId).push(messagePayload);
           console.log(`[Hors ligne] Message stocké pour ${recipientId} (expéditeur: ${currentUserId})`);
 
-          // Optionnel : On peut notifier l'expéditeur que le message a bien été mis en attente 
-          // (au lieu de lui renvoyer une erreur bloquante)
+          // Informer l'expéditeur que le message a bien été mis en attente
           ws.send(JSON.stringify({
             type: 'info',
             message: `Utilisateur hors ligne. Message mis en attente sur le serveur.`
           }));
         }
       }
+
+      // 3. Demande de statut en ligne d'un contact
+      else if (message.type === 'check_status') {
+        const { targetId } = message;
+        const isOnline = clients.has(targetId) && clients.get(targetId).readyState === WebSocket.OPEN;
+
+        ws.send(JSON.stringify({
+          type: 'status_response',
+          targetId: targetId,
+          isOnline: isOnline
+        }));
+      }
+
     } catch (e) {
       console.error('Erreur lors du traitement du message JSON :', e);
     }
