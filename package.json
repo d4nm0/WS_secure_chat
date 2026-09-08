@@ -2,9 +2,10 @@
   "name": "secure_chat_app_server",
   "version": "1.0.0",
   "description": "",
-  "main": "server.ts",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "tsx server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,13 +13,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "ws": "^8.21.3",
-    "tsx": "^4.23.13"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
     "@types/ws": "^8.18.1",
-    "ts-node": "^10.9.2",
     "typescript": "^7.0.2"
   }
 }
