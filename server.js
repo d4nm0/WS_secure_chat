@@ -1,14 +1,35 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import http from 'http';
+
+// 1. Créer un serveur HTTP natif pour gérer à la fois les requêtes HTTP (comme /version.json) et les WebSockets
+const server = http.createServer((req, res) => {
+  // Route pour fournir le fichier de version de l'application à l'APK Flutter
+  if (req.url === '/version.json') {
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*' // Permet l'accès depuis n'importe quelle origine si besoin
+    });
+    res.end(JSON.stringify({
+      "latestVersion": "0.9.0",
+      "apkUrl": "https://github.com/d4nm0/Hush_web/releases/download/Beta.09092026/Hush.Beta.09092026.apk",
+      "releaseNotes": "Amélioration de la synchronisation en temps réel et des notifications en arrière-plan."
+    }));
+  } else {
+    // Réponse par défaut pour les autres requêtes HTTP
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Hush Relay Server is active.');
+  }
+});
+
+// 2. Attacher le serveur WebSocket sur le même serveur HTTP
+const wss = new WebSocketServer({ server });
 
 // Utiliser le port attribué par Render ou 8080 par défaut en local
 const PORT = process.env.PORT || 8080;
-const wss = new WebSocketServer({ port: PORT });
 
 // Maps pour stocker les clients connectés et les messages en attente
 const clients = new Map();
 const offlineMessages = new Map();
-
-console.log(`Serveur de relais WebSocket démarré sur le port ${PORT}`);
 
 wss.on('connection', (ws) => {
   let currentUserId = null;
@@ -94,4 +115,9 @@ wss.on('connection', (ws) => {
       console.log(`[Déconnecté] Utilisateur retiré : ${currentUserId}`);
     }
   });
+});
+
+// 3. Lancer le serveur sur le port Render
+server.listen(PORT, () => {
+  console.log(`Serveur Hush démarré (WebSocket + API Version) sur le port ${PORT}`);
 });
