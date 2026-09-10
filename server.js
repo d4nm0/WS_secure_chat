@@ -1,21 +1,23 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
+import fs from 'fs';
 
-// 1. Créer un serveur HTTP natif pour gérer à la fois les requêtes HTTP (comme /version.json) et les WebSockets
 const server = http.createServer((req, res) => {
-  // Route pour fournir le fichier de version de l'application à l'APK Flutter
   if (req.url === '/version.json') {
-    res.writeHead(200, { 
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*' // Permet l'accès depuis n'importe quelle origine si besoin
-    });
-    res.end(JSON.stringify({
-      "latestVersion": "0.9.0",
-      "apkUrl": "https://github.com/d4nm0/Hush_web/releases/download/Beta.09092026/Hush.Beta.09092026.apk",
-      "releaseNotes": "Amélioration de la synchronisation en temps réel et des notifications en arrière-plan."
-    }));
+    try {
+      // 2. C'est cette ligne qui va chercher ton fichier version.json sur le disque du serveur
+      const versionData = fs.readFileSync('./version.json', 'utf8');
+      
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(versionData); // 3. Et c'est ça qui renvoie le contenu exact du fichier
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Erreur de lecture du fichier version.json');
+    }
   } else {
-    // Réponse par défaut pour les autres requêtes HTTP
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Hush Relay Server is active.');
   }
