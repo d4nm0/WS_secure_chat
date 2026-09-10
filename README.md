@@ -11,10 +11,3 @@ Le serveur **Hush WebSocket** agit exclusivement comme une passerelle de routage
 * **Zéro Stockage en Clair :** Le serveur ne stocke, ne lit et ne conserve aucun message. Il se contente de relayer les charges utiles (*payloads*) chiffrées de bout en bout d'un client à un autre.
 * **Gestion des Statuts :** Il gère la présence en ligne des utilisateurs connectés pour permettre l'affichage des indicateurs de statut en direct sur l'application mobile.
 * **Hébergement Souverain :** Conçu pour être déployé facilement sur des services cloud (ex: Render) hors de France pour renforcer la confidentialité des métadonnées de transit.
-
-## 🚀 Installation & Lancement local
-
-1. Clonez le dépôt :
-   ```bash
-   git clone [https://github.com/votre-compte/hush-websocket-server.git](https://github.com/votre-compte/hush-websocket-server.git)
-   cd hush-websocket-server
